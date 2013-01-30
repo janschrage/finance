@@ -62,7 +62,6 @@ module Finance
       amount = Amortization.payment @balance, rate.monthly, periods
 
       pmt = Payment.new(amount, :period => @period)
-      if @block then pmt.modify(&@block) end
         
       rate.duration.times do
         # Do this first in case the balance is zero already.
@@ -75,9 +74,12 @@ module Finance
         @transactions << interest.dup
 
         # Record payment.  Don't pay more than the outstanding balance.
+        pmt_backup=pmt.amount
+        if @block then pmt.modify(&@block) end
         if pmt.amount.abs > @balance then pmt.amount = -@balance end
         @transactions << pmt.dup
         @balance += pmt.amount
+        pmt.amount=pmt_backup
         
         @period += 1
       end
